@@ -1,9 +1,11 @@
 let polygons;
 let numPolygons = 6;
+let speed = 0.8;
+let pointAnimations;
 
 function setup() {
   createCanvas(400, 400);
-
+  pointAnimations = [];
   polygons = [];
 
   for (let index = 0; index < numPolygons; index++) {
@@ -27,7 +29,7 @@ function draw() {
   background(0);
   polygons.forEach(polygon => {
     polygon.draw();
-    polygon.draw_point_at(frameCount);
+    polygon.drawPointAt(frameCount * speed);
   });
 }
 
@@ -46,6 +48,8 @@ class Figure {
     this.perimeterLength = this.sideLength * this.num_sides;
 
     this.pointActualVertex = this.vertexes[0];
+
+    this.pointAnimations = [];
 
     console.log("sideLength", this.sideLength);
   }
@@ -72,7 +76,7 @@ class Figure {
     return sideLength;
   }
 
-  draw_point_at(step) {
+  drawPointAt(step) {
     let truncatedStep = step % this.perimeterLength;
     let actualSideIndex = floor(truncatedStep / this.sideLength);
     let stepInSide = step % this.sideLength;
@@ -88,12 +92,20 @@ class Figure {
     circle(pointPosition.x, pointPosition.y, 5);
 
     if(vertexA != this.pointActualVertex){
-      this.vertexImpact();
+      this.vertexImpact(pointPosition.x, pointPosition.y);
       this.pointActualVertex = vertexA;
     }
   }
 
-  draw() {
+  drawPointAnimations() {
+    this.pointAnimations.forEach(pointAnimation => {
+      pointAnimation.draw();
+    });
+
+    this.pointAnimations = this.pointAnimations.filter(pointAnimation => !pointAnimation.isFinished());
+  }
+
+  drawPolygon() {
     noFill();
     stroke(this.color);
     beginShape();
@@ -103,8 +115,46 @@ class Figure {
     endShape(CLOSE);
   }
 
-  vertexImpact(){
+  draw() {
+    this.drawPolygon();
+    this.drawPointAnimations();
+  }
+
+
+  vertexImpact(x, y){
     if(this.soundActive)
       this.sound.play();
+
+    this.pointAnimations.push(new PointAnimation(x, y, this.color));
+    console.log("PointAnimations.length: " + this.pointAnimations.length)
+  }
+}
+
+class PointAnimation {
+  constructor(x, y, color){
+    this.x = x;
+    this.y = y;
+    this.color = color;
+
+    this.step = 0;
+    this.numSteps = 10;
+    this.maxSize = 30;
+
+    console.log("PointAnimation.new");
+  }
+
+  draw() {
+    let alpha = map(this.step, 0, this.numSteps, 255, 0);
+    this.color.setAlpha(alpha);
+    fill(this.color);
+    let radius = map(this.step, 0, this.numSteps, this.maxSize, 0);
+    circle(this.x, this. y, radius);
+    this.step += 0.5;
+
+    console.log("draw(), step: " + this.step + ", radius: " + radius + ", alpha: " + alpha);
+  }
+
+  isFinished() {
+    return this.step >= this.numSteps
   }
 }
