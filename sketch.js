@@ -6,6 +6,7 @@ function setup() {
 
   polygons = [];
 
+
   for (let index = 0; index < numPolygons; index++) {
     colorMode(HSB, numPolygons);
     let x = width / 2;
@@ -13,10 +14,15 @@ function setup() {
     let radius = (index  + 1) * 20;
     let numSides = index + 3
     let _color = color(index, numPolygons / 2, 100)
+    let sound = loadSound("assets/dong.wav");
+    let soundRate = map(index, 0, numPolygons, 0.8, 2);
+    sound.rate(soundRate);
 
-    polygon = new Figure(x, y, radius, numSides, _color);
+    polygon = new Figure(x, y, radius, numSides, _color, sound);
     polygons.push(polygon);
   }
+
+
 }
 
 function draw() {
@@ -28,16 +34,20 @@ function draw() {
 }
 
 class Figure {
-  constructor(x, y, radius, num_sides, color) {
+  constructor(x, y, radius, num_sides, color, sound) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.num_sides = num_sides;
     this.color = color;
+    this.sound = sound;
+    this.sound
 
     this.vertexes = this.calculateVertexes();
     this.sideLength = this.calculateSideLength();
     this.perimeterLength = this.sideLength * this.num_sides;
+
+    this.pointActualVertex = this.vertexes[0];
 
     console.log("sideLength", this.sideLength);
   }
@@ -74,9 +84,15 @@ class Figure {
     // console.log("vertexA", vertexA);
     // console.log("vertexB", vertexB);
     // console.log("normalizedStepInSide", normalizedStepInSide);
+    // console.log("stepInSide", stepInSide);
     let pointPosition = p5.Vector.lerp(vertexA, vertexB, normalizedStepInSide);
     fill(this.color);
     circle(pointPosition.x, pointPosition.y, 5);
+
+    if(vertexA != this.pointActualVertex){
+      this.vertexImpact();
+      this.pointActualVertex = vertexA;
+    }
   }
 
   draw() {
@@ -87,5 +103,9 @@ class Figure {
       vertex(actual_vertex.x, actual_vertex.y);
     });
     endShape(CLOSE);
+  }
+
+  vertexImpact(){
+    this.sound.play();
   }
 }
