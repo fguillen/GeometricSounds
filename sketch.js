@@ -2,10 +2,9 @@ let polygons;
 let numPolygons = 6;
 
 function setup() {
-  createCanvas(720, 400);
+  createCanvas(400, 400);
 
   polygons = [];
-
 
   for (let index = 0; index < numPolygons; index++) {
     colorMode(HSB, numPolygons);
@@ -15,14 +14,13 @@ function setup() {
     let numSides = index + 3
     let _color = color(index, numPolygons / 2, 100)
     let sound = loadSound("assets/dong.wav");
-    let soundRate = map(index, 0, numPolygons, 0.8, 2);
+    let soundRate = map(index, 0, numPolygons, 0.8, 1.5);
     sound.rate(soundRate);
+    let soundActive = true;
 
-    polygon = new Figure(x, y, radius, numSides, _color, sound);
+    polygon = new Figure(x, y, radius, numSides, _color, sound, soundActive);
     polygons.push(polygon);
   }
-
-
 }
 
 function draw() {
@@ -34,14 +32,14 @@ function draw() {
 }
 
 class Figure {
-  constructor(x, y, radius, num_sides, color, sound) {
+  constructor(x, y, radius, num_sides, color, sound, soundActive) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.num_sides = num_sides;
     this.color = color;
     this.sound = sound;
-    this.sound
+    this.soundActive = soundActive;
 
     this.vertexes = this.calculateVertexes();
     this.sideLength = this.calculateSideLength();
@@ -106,6 +104,7 @@ class Figure {
   }
 
   vertexImpact(){
-    this.sound.play();
+    if(this.soundActive)
+      this.sound.play();
   }
 }
