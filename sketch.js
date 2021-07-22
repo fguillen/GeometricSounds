@@ -24,7 +24,6 @@ function setup() {
 
   // start paused
   pauseToggle();
-  // noLoop();
 }
 
 function createPolygon(index, numPolygons) {
@@ -38,7 +37,7 @@ function createPolygon(index, numPolygons) {
   let _color = color(index, numPolygons / 2, 100)
   pop();
 
-  let sound = loadSound("./assets/dong.wav");
+  let sound = loadSound("./assets/dong.mp3");
   let soundRate = map(index, 0, numPolygons, 0.8, 1.5);
   sound.rate(soundRate);
 
@@ -198,7 +197,7 @@ class Polygon {
   vertexImpact(x, y){
     this.sound.play();
 
-    new VertexImpactAnimation(x, y, color(this.color.toString()));
+    new VertexImpactAnimation(x, y, color(this.color.toString())); // duplicate the color
   }
 }
 
