@@ -11,4 +11,5 @@ Totally inspired in a @davebeesbombs's creation:
 ### OTher
 
 - sound: https://freesound.org/people/Q.K./sounds/56240/
-- icon: https://www.flaticon.com/authors/vectors-market
+- icon 1: https://www.flaticon.com/authors/pixel-perfect
+- icon 2: https://www.freepik.com

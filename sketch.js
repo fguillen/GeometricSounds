@@ -1,9 +1,15 @@
 let numPolygons = 6;
-let muted = true;
+let paused = false;
 let cycleTime = 14;
 let step = 0;
-let speakerOnIcon;
-let speakerOffIcon;
+let iconPause;
+let iconPlay;
+let myDeltaTime = 0;
+
+function preload() {
+  iconPause = loadImage("assets/pause.png");
+  iconPlay = loadImage("assets/play.png");
+}
 
 function setup() {
   let canvas = createCanvas(400, 400);
@@ -13,8 +19,12 @@ function setup() {
     createPolygon(index, numPolygons);
   }
 
-  speakerOnIcon = loadImage('assets/speaker_on.png');
-  speakerOffIcon = loadImage('assets/speaker_off.png');
+  iconPause.loadPixels();
+  iconPlay.loadPixels();
+
+  // start paused
+  pauseToggle();
+  // noLoop();
 }
 
 function createPolygon(index, numPolygons) {
@@ -44,34 +54,43 @@ function draw() {
   Polygon.drawAll(step);
   VertexImpactAnimation.draAll();
 
-  drawSpeaker();
+  drawPlayButton();
 }
 
-function muteToggle() {
-  muted = !muted;
+function drawPlayButton() {
+  let speaker = speakerImage();
+  tint(255, 255, 255, 100);
+  image(speaker, width - 50, height - 50, speaker.width / 3, speaker.height / 3);
+}
+
+function pauseToggle() {
+  paused = !paused;
+
+  if(paused) {
+    noLoop();
+  } else {
+    loop();
+    deltaTime = 0;
+  }
 }
 
 function keyPressed() {
   if (keyCode === 32) {
-    muteToggle();
+    pauseToggle();
   }
 }
 
 function mouseClicked() {
-  muteToggle();
+  pauseToggle();
 }
 
-function drawSpeaker() {
-  let speaker = speakerImage();
-  tint(255, 255, 255, 100);
-  image(speaker, width - 50, height - 50, speaker.width / 2, speaker.height / 2);
-}
+
 
 function speakerImage() {
-  if(muted)
-    return speakerOffIcon;
+  if(paused)
+    return iconPlay;
   else
-    return speakerOnIcon;
+    return iconPause;
 }
 
 class Polygon {
@@ -177,8 +196,7 @@ class Polygon {
   }
 
   vertexImpact(x, y){
-    if(!muted)
-      this.sound.play();
+    this.sound.play();
 
     new VertexImpactAnimation(x, y, color(this.color.toString()));
   }
