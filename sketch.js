@@ -1,11 +1,10 @@
 let polygons;
-let numPolygons = 6;
+let numPolygons = 6 ;
 let speed = 0.8;
-let pointAnimations;
+let paused = false;
 
 function setup() {
   createCanvas(400, 400);
-  pointAnimations = [];
   polygons = [];
 
   for (let index = 0; index < numPolygons; index++) {
@@ -28,9 +27,30 @@ function setup() {
 function draw() {
   background(0);
   polygons.forEach(polygon => {
-    polygon.draw();
-    polygon.drawPointAt(frameCount * speed);
+    polygon.draw(frameCount * speed);
   });
+
+  PointAnimation.draAll();
+}
+
+function pauseToggle() {
+  paused = !paused;
+
+  if(paused) {
+    loop();
+  } else {
+    noLoop();
+  }
+}
+
+function keyPressed() {
+  if (keyCode === 32) {
+    pauseToggle();
+  }
+}
+
+function mouseClicked() {
+  pauseToggle();
 }
 
 class Figure {
@@ -49,12 +69,11 @@ class Figure {
 
     this.pointActualVertex = this.vertexes[0];
 
-    this.pointAnimations = [];
-
     console.log("sideLength", this.sideLength);
   }
 
   calculateVertexes(){
+    angleMode(RADIANS);
     let vertexes = [];
     let angle = TWO_PI / this.num_sides;
     for (let a = 0; a < TWO_PI; a += angle) {
@@ -97,14 +116,6 @@ class Figure {
     }
   }
 
-  drawPointAnimations() {
-    this.pointAnimations.forEach(pointAnimation => {
-      pointAnimation.draw();
-    });
-
-    this.pointAnimations = this.pointAnimations.filter(pointAnimation => !pointAnimation.isFinished());
-  }
-
   drawPolygon() {
     noFill();
     stroke(this.color);
@@ -115,46 +126,58 @@ class Figure {
     endShape(CLOSE);
   }
 
-  draw() {
+  draw(step) {
     this.drawPolygon();
-    this.drawPointAnimations();
+    this.drawPointAt(step)
   }
-
 
   vertexImpact(x, y){
     if(this.soundActive)
       this.sound.play();
 
-    this.pointAnimations.push(new PointAnimation(x, y, this.color));
-    console.log("PointAnimations.length: " + this.pointAnimations.length)
+    new PointAnimation(x, y, this.color)
   }
 }
 
 class PointAnimation {
+  static numSteps = 10;
+  static maxSize = 30;
+  static allAnimations = [];
+
+  static draAll() {
+    PointAnimation.allAnimations.forEach(pointAnimation => {
+      pointAnimation.draw();
+    });
+  }
+
   constructor(x, y, color){
     this.x = x;
     this.y = y;
     this.color = color;
 
     this.step = 0;
-    this.numSteps = 10;
-    this.maxSize = 30;
 
-    console.log("PointAnimation.new");
+    PointAnimation.allAnimations.push(this);
+    // console.log("PointAnimation.allAnimations.length: " + PointAnimation.allAnimations.length);
   }
 
   draw() {
-    let alpha = map(this.step, 0, this.numSteps, 255, 0);
+    let alpha = map(this.step, 0, PointAnimation.numSteps, 255, 0);
     this.color.setAlpha(alpha);
     fill(this.color);
-    let radius = map(this.step, 0, this.numSteps, this.maxSize, 0);
+    let radius = map(this.step, 0, PointAnimation.numSteps, PointAnimation.maxSize, 0);
     circle(this.x, this. y, radius);
     this.step += 0.5;
+
+    // Remove the Animation if finished
+    if(this.isFinished() ) {
+      PointAnimation.allAnimations = PointAnimation.allAnimations.filter(e => e !== this);
+    }
 
     console.log("draw(), step: " + this.step + ", radius: " + radius + ", alpha: " + alpha);
   }
 
   isFinished() {
-    return this.step >= this.numSteps
+    return this.step >= PointAnimation.numSteps
   }
 }
