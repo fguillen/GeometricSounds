@@ -4,7 +4,8 @@ let cycleTime = 14;
 let step = 0;
 
 function setup() {
-  createCanvas(400, 400);
+  let canvas = createCanvas(400, 400);
+  canvas.parent("canvas-container")
 
   for (let index = 0; index < numPolygons; index++) {
     createPolygon(index, numPolygons);
