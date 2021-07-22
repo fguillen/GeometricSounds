@@ -1,41 +1,42 @@
-let polygons;
 let numPolygons = 6;
-let speed = 0.8;
 let paused = false;
+let cycleTime = 14;
+let step = 0;
 
 function setup() {
   createCanvas(400, 400);
-  polygons = [];
 
   for (let index = 0; index < numPolygons; index++) {
-
-    let x = width / 2;
-    let y = height / 2;
-    let radius = (index  + 1) * 20;
-    let numSides = index + 3
-
-    push();
-    colorMode(HSB, numPolygons);
-    let _color = color(index, numPolygons / 2, 100)
-    pop();
-
-    let sound = loadSound("./assets/dong.wav");
-    let soundRate = map(index, 0, numPolygons, 0.8, 1.5);
-    sound.rate(soundRate);
-    let soundActive = true;
-
-    polygon = new Figure(x, y, radius, numSides, _color, sound, soundActive);
-    polygons.push(polygon);
+    createPolygon(index, numPolygons);
   }
 }
 
-function draw() {
-  background(0);
-  polygons.forEach(polygon => {
-    polygon.draw(frameCount * speed);
-  });
+function createPolygon(index, numPolygons) {
+  let x = width / 2;
+  let y = height / 2;
+  let radius = (index  + 1) * 20;
+  let numSides = index + 3
 
-  PointAnimation.draAll();
+  push();
+  colorMode(HSB, numPolygons);
+  let _color = color(index, numPolygons / 2, 100)
+  pop();
+
+  let sound = loadSound("./assets/dong.wav");
+  let soundRate = map(index, 0, numPolygons, 0.8, 1.5);
+  sound.rate(soundRate);
+
+  let dotTime =  ((index + 1) / numPolygons) * cycleTime;
+
+  new Polygon(x, y, radius, numSides, _color, sound, dotTime);
+}
+
+function draw() {
+  step += deltaTime;
+  background(0);
+
+  Polygon.drawAll(step);
+  VertexImpactAnimation.draAll();
 }
 
 function pauseToggle() {
@@ -58,33 +59,47 @@ function mouseClicked() {
   pauseToggle();
 }
 
-class Figure {
-  constructor(x, y, radius, num_sides, color, sound, soundActive) {
+class Polygon {
+  static all = [];
+  static dotRadius = 8;
+
+  constructor(x, y, radius, num_sides, color, sound, dotTime) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.num_sides = num_sides;
     this.color = color;
     this.sound = sound;
-    this.soundActive = soundActive;
+    this.dotTime = dotTime;
 
     this.vertexes = this.calculateVertexes();
     this.sideLength = this.calculateSideLength();
     this.perimeterLength = this.sideLength * this.num_sides;
 
-    this.pointActualVertex = this.vertexes[0];
+    this.dotActualVertex = this.vertexes[0];
+    this.dotSpeed = this.perimeterLength / this.dotTime;
 
-    console.log("sideLength", this.sideLength);
+    Polygon.all.push(this);
+
+    // console.log("perimeterLength: " + this.perimeterLength);
+    // console.log("dotSpeed: " + this.dotSpeed);
+    // console.log("sideLength", this.sideLength);
+  }
+
+  static drawAll(step) {
+    Polygon.all.forEach(polygon => {
+      polygon.draw(step);
+    });
   }
 
   calculateVertexes(){
     push();
     angleMode(RADIANS);
     let vertexes = [];
-    let angle = TWO_PI / this.num_sides;
+    let angle = (TWO_PI / this.num_sides);
     for (let a = 0; a < TWO_PI; a += angle) {
-      let sx = this.x + cos(a) * this.radius;
-      let sy = this.y + sin(a) * this.radius;
+      let sx = this.x + (cos(a) * this.radius);
+      let sy = this.y + (sin(a) * this.radius);
       vertexes.push(createVector(sx, sy, 0))
     }
     pop();
@@ -102,28 +117,35 @@ class Figure {
     return sideLength;
   }
 
-  drawPointAt(step) {
+  drawDotAt(step) {
+    // Messy stuff to calculate the position of the Dot
+    // Basically is figuring out in which side of the Polygon the dot should be
+    // and lerping among the both vertexes
+    step = (step / 1000) * this.dotSpeed;
     let truncatedStep = step % this.perimeterLength;
     let actualSideIndex = floor(truncatedStep / this.sideLength);
-    let stepInSide = step % this.sideLength;
-    let normalizedStepInSide = map(stepInSide, 0, this.sideLength, 0, 1);
+    let stepOnSide = step % this.sideLength;
+    let normalizedStepOnSide = map(stepOnSide, 0, this.sideLength, 0, 1);
     let vertexA = this.vertexes[actualSideIndex];
     let vertexB = this.vertexes[(actualSideIndex + 1) % this.vertexes.length];
-    // console.log("vertexA", vertexA);
-    // console.log("vertexB", vertexB);
-    // console.log("normalizedStepInSide", normalizedStepInSide);
-    // console.log("stepInSide", stepInSide);
-    let pointPosition = p5.Vector.lerp(vertexA, vertexB, normalizedStepInSide);
-    fill(this.color);
-    circle(pointPosition.x, pointPosition.y, 5);
+    let dotPosition = p5.Vector.lerp(vertexA, vertexB, normalizedStepOnSide);
 
-    if(vertexA != this.pointActualVertex){
-      this.vertexImpact(pointPosition.x, pointPosition.y);
-      this.pointActualVertex = vertexA;
+    // Draw the Dot
+    push();
+    fill(this.color);
+    noStroke();
+    circle(dotPosition.x, dotPosition.y, Polygon.dotRadius);
+    pop();
+
+    // When origin Vertex changed we trigger a VertexImpactAnimation
+    if(vertexA != this.dotActualVertex){
+      this.vertexImpact(dotPosition.x, dotPosition.y);
+      this.dotActualVertex = vertexA;
     }
   }
 
   drawPolygon() {
+    push();
     noFill();
     stroke(this.color);
     beginShape();
@@ -131,30 +153,29 @@ class Figure {
       vertex(actual_vertex.x, actual_vertex.y);
     });
     endShape(CLOSE);
+    pop();
   }
 
   draw(step) {
     this.drawPolygon();
-    this.drawPointAt(step)
+    this.drawDotAt(step)
   }
 
   vertexImpact(x, y){
-    if(this.soundActive)
-      this.sound.play();
-
-    new PointAnimation(x, y, color(this.color.toString()));
+    this.sound.play();
+    new VertexImpactAnimation(x, y, color(this.color.toString()));
   }
 }
 
-class PointAnimation {
+class VertexImpactAnimation {
   static numSteps = 10;
   static maxSize = 20;
   static allAnimations = [];
   static speed = 0.3;
 
   static draAll() {
-    PointAnimation.allAnimations.forEach(pointAnimation => {
-      pointAnimation.draw();
+    VertexImpactAnimation.allAnimations.forEach(VertexImpactAnimation => {
+      VertexImpactAnimation.draw();
     });
   }
 
@@ -165,30 +186,29 @@ class PointAnimation {
 
     this.step = 0;
 
-    PointAnimation.allAnimations.push(this);
-    // console.log("PointAnimation.allAnimations.length: " + PointAnimation.allAnimations.length);
+    VertexImpactAnimation.allAnimations.push(this);
   }
 
   draw() {
     push();
-    let alpha = map(this.step, 0, PointAnimation.numSteps, 255, 100);
+    let alpha = map(this.step, 0, VertexImpactAnimation.numSteps, 255, 100);
     this.color.setAlpha(alpha);
     fill(this.color);
-    stroke(this.color);
-    let radius = map(this.step, 0, PointAnimation.numSteps, PointAnimation.maxSize, 0);
+    noStroke();
+    let radius = map(this.step, 0, VertexImpactAnimation.numSteps, VertexImpactAnimation.maxSize, 0);
     circle(this.x, this. y, radius);
-    this.step += PointAnimation.speed;
+    this.step += VertexImpactAnimation.speed;
 
     // Remove the Animation if finished
     if(this.isFinished() ) {
-      PointAnimation.allAnimations = PointAnimation.allAnimations.filter(e => e !== this);
+      VertexImpactAnimation.allAnimations = VertexImpactAnimation.allAnimations.filter(e => e !== this);
     }
 
-    console.log("draw(), step: " + this.step + ", radius: " + radius + ", alpha: " + alpha + ", this.color: " + this.color);
+    // console.log("draw(), step: " + this.step + ", radius: " + radius + ", alpha: " + alpha + ", this.color: " + this.color);
     pop();
   }
 
   isFinished() {
-    return this.step >= PointAnimation.numSteps
+    return this.step >= VertexImpactAnimation.numSteps
   }
 }
