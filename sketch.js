@@ -73,6 +73,7 @@ class Figure {
   }
 
   calculateVertexes(){
+    push();
     angleMode(RADIANS);
     let vertexes = [];
     let angle = TWO_PI / this.num_sides;
@@ -81,6 +82,7 @@ class Figure {
       let sy = this.y + sin(a) * this.radius;
       vertexes.push(createVector(sx, sy, 0))
     }
+    pop();
 
     return vertexes;
   }
@@ -90,8 +92,8 @@ class Figure {
     push();
     angleMode(DEGREES);
     let sideLength = this.radius * 2 * sin(180 / this.num_sides);;
-    angleMode(RADIANS);
     pop();
+
     return sideLength;
   }
 
