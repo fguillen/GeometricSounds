@@ -1,5 +1,7 @@
 # GeometricSounds
 
+Simple artistic exercise to experiment and create some muscles with P5js.
+
 ## Credits
 
 Totally inspired in a @davebeesbombs's creation:
