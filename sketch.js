@@ -1,5 +1,5 @@
 let polygons;
-let numPolygons = 6 ;
+let numPolygons = 6;
 let speed = 0.8;
 let paused = false;
 
@@ -8,13 +8,18 @@ function setup() {
   polygons = [];
 
   for (let index = 0; index < numPolygons; index++) {
-    colorMode(HSB, numPolygons);
+
     let x = width / 2;
     let y = height / 2;
     let radius = (index  + 1) * 20;
     let numSides = index + 3
+
+    push();
+    colorMode(HSB, numPolygons);
     let _color = color(index, numPolygons / 2, 100)
-    let sound = loadSound("assets/dong.wav");
+    pop();
+
+    let sound = loadSound("./assets/dong.wav");
     let soundRate = map(index, 0, numPolygons, 0.8, 1.5);
     sound.rate(soundRate);
     let soundActive = true;
@@ -137,14 +142,15 @@ class Figure {
     if(this.soundActive)
       this.sound.play();
 
-    new PointAnimation(x, y, this.color)
+    new PointAnimation(x, y, color(this.color.toString()));
   }
 }
 
 class PointAnimation {
   static numSteps = 10;
-  static maxSize = 30;
+  static maxSize = 20;
   static allAnimations = [];
+  static speed = 0.3;
 
   static draAll() {
     PointAnimation.allAnimations.forEach(pointAnimation => {
@@ -164,19 +170,22 @@ class PointAnimation {
   }
 
   draw() {
-    let alpha = map(this.step, 0, PointAnimation.numSteps, 255, 0);
+    push();
+    let alpha = map(this.step, 0, PointAnimation.numSteps, 255, 100);
     this.color.setAlpha(alpha);
     fill(this.color);
+    stroke(this.color);
     let radius = map(this.step, 0, PointAnimation.numSteps, PointAnimation.maxSize, 0);
     circle(this.x, this. y, radius);
-    this.step += 0.5;
+    this.step += PointAnimation.speed;
 
     // Remove the Animation if finished
     if(this.isFinished() ) {
       PointAnimation.allAnimations = PointAnimation.allAnimations.filter(e => e !== this);
     }
 
-    console.log("draw(), step: " + this.step + ", radius: " + radius + ", alpha: " + alpha);
+    console.log("draw(), step: " + this.step + ", radius: " + radius + ", alpha: " + alpha + ", this.color: " + this.color);
+    pop();
   }
 
   isFinished() {
