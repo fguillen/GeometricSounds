@@ -37,9 +37,8 @@ function createPolygon(index, numPolygons) {
   let _color = color(index, numPolygons / 2, 100)
   pop();
 
-  let sound = loadSound("./assets/dong.mp3");
   let soundRate = map(index, 0, numPolygons, 0.8, 1.5);
-  sound.rate(soundRate);
+  let sound = new Dong(soundRate);
 
   let dotTime =  ((index + 1) / numPolygons) * cycleTime;
 
@@ -90,6 +89,27 @@ function speakerImage() {
     return iconPlay;
   else
     return iconPause;
+}
+
+// From: https://www.reddit.com/r/p5js/comments/opo5h3/sound_starts_to_get_distorted_after_a_while/h6rnsu6
+// Each instance of this class is an HTML Audio element
+// I used only built in JS methods so the distortion
+// should be gone. You will get clipping by playing
+// these all simultaneously so I reduced the volume to 0.2.
+class Dong {
+  constructor(pitch) {
+    this.pitch = pitch;
+  }
+
+  play() {
+    let s = new Audio('./assets/gong.wav');
+    s.mozPreservesPitch = false;
+    s.preservesPitch = false;
+    s.volume = 0.2;    // Reduced volume to avoid clipping
+    s.playbackRate = this.pitch
+    s.play();
+  }
+
 }
 
 class Polygon {
